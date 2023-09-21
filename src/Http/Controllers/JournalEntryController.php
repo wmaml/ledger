@@ -106,11 +106,15 @@ class JournalEntryController extends Controller
                     'balance' => $journalDetail->amount,
                 ]);
             } else {
-                $ledgerBalance->balance = bcadd(
-                    $ledgerBalance->balance,
-                    $journalDetail->amount,
-                    $this->ledgerCurrency->decimals
-                );
+                // $ledgerBalance->balance = bcadd(
+                //     $ledgerBalance->balance,
+                //     $journalDetail->amount,
+                //     $this->ledgerCurrency->decimals
+                // );
+                LedgerBalance::where('id', $ledgerBalance->id)
+                    ->update([
+                        'balance' => DB::raw("CAST(balance as DECIMAL(32, 4)) + CAST(" + $journalDetail->amount) + " as DECIMAL(32, 4))"
+                    ]);
                 $ledgerBalance->save();
             }
         }
@@ -164,7 +168,8 @@ class JournalEntryController extends Controller
         $journalDetails = JournalDetail::with(
             ['balances' => function ($query) use ($journalEntry) {
                 $query->where('currency', $journalEntry->currency);
-            }])
+            }]
+        )
             ->where('journalEntryId', $journalEntry->journalEntryId)
             ->get();
         /** @var JournalDetail $oldDetail */
@@ -460,5 +465,4 @@ class JournalEntryController extends Controller
             throw Breaker::withCode(Breaker::RULE_VIOLATION, $errors);
         }
     }
-
 }
