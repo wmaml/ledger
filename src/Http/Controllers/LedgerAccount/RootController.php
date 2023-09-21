@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Abivia\Ledger\Http\Controllers\LedgerAccount;
@@ -99,7 +100,8 @@ class RootController extends LedgerAccountController
         /** @noinspection PhpDynamicAsStaticMethodCallInspection */
         if (LedgerAccount::count() !== 0) {
             throw Breaker::withCode(
-                Breaker::RULE_VIOLATION, [__('Ledger is not empty.')]
+                Breaker::RULE_VIOLATION,
+                [__('Ledger is not empty.')]
             );
         }
     }
@@ -327,14 +329,14 @@ class RootController extends LedgerAccountController
                 // The opening balance is special as it can have any number of debits and credits.
                 /** @noinspection PhpDynamicAsStaticMethodCallInspection */
                 $journalEntry = JournalEntry::create([
-                    'currency'=> $currencyCode,
-                    'description'=> 'Opening Balance',
-                    'domainUuid'=> $ledgerDomain->domainUuid,
-                    'arguments'=> [],
-                    'language'=> $language,
-                    'opening'=> true,
-                    'reviewed'=> true,
-                    'transDate'=> $transDate,
+                    'currency' => $currencyCode,
+                    'description' => 'Opening Balance',
+                    'domainUuid' => $ledgerDomain->domainUuid,
+                    'arguments' => [],
+                    'language' => $language,
+                    'opening' => true,
+                    'reviewed' => true,
+                    'transDate' => $transDate,
                 ]);
 
                 foreach ($balances as $detail) {
@@ -356,14 +358,14 @@ class RootController extends LedgerAccountController
                     $journalDetail = new JournalDetail();
                     $journalDetail->journalEntryId = $journalEntry->journalEntryId;
                     $journalDetail->ledgerUuid = $ledgerAccount->ledgerUuid;
-                    $journalDetail->amount = bcadd('0', $detail->amount, $decimals);
+                    $journalDetail->amount = number_format($detail->amount, $decimals); // bcadd('0', $detail->amount, $decimals);
                     $journalDetail->save();
                     // Create the ledger balances
                     $ledgerBalance = new LedgerBalance();
                     $ledgerBalance->ledgerUuid = $journalDetail->ledgerUuid;
                     $ledgerBalance->domainUuid = $ledgerDomain->domainUuid;
                     $ledgerBalance->currency = $detail->currency;
-                    $ledgerBalance->balance = bcadd('0', $detail->amount, $decimals);
+                    $ledgerBalance->balance = number_format($detail->amount, $decimals); //bcadd('0', $detail->amount, $decimals);
                     $ledgerBalance->save();
                 }
             }
@@ -532,7 +534,8 @@ class RootController extends LedgerAccountController
         $this->templateAccounts = [];
         if (isset($this->initData->template)) {
             $template = json_decode(
-                file_get_contents($this->initData->templatePath), true
+                file_get_contents($this->initData->templatePath),
+                true
             );
             if ($template === false) {
                 $this->errors[] = __(
@@ -557,7 +560,8 @@ class RootController extends LedgerAccountController
                 try {
                     // Pass OP_CREATE because we're in the boot process
                     $message = Account::fromArray(
-                        $account, Message::OP_ADD | Message::OP_CREATE | Message::F_VALIDATE
+                        $account,
+                        Message::OP_ADD | Message::OP_CREATE | Message::F_VALIDATE
                     );
                 } catch (Breaker $exception) {
                     $errors = $exception->getErrors();
@@ -575,10 +579,9 @@ class RootController extends LedgerAccountController
              * @var int $key
              * @var array $section */
             foreach ($template['sections'] ?? [] as $key => $section) {
-                $this->sections[$key] = Section::fromArray($section, ['checkAccount' =>false]);
+                $this->sections[$key] = Section::fromArray($section, ['checkAccount' => false]);
                 $this->buildSectionMap($key, $this->sections[$key], false);
             }
         }
     }
-
 }

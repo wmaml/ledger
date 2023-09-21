@@ -42,8 +42,8 @@ class Balance extends Message
      */
     public function addAmountTo(string &$amount, int $decimals): string
     {
-        $amount = bcadd($amount, $this->amount, $decimals);
-
+        // $amount = bcadd($amount, $this->amount, $decimals);
+        $amount = number_format($amount, $decimals) +  number_format($this->amount, $decimals);
         return $amount;
     }
 
@@ -112,7 +112,8 @@ class Balance extends Message
                     __('Currency :code not found.', ['code' => $this->currency])
                 );
             }
-            $this->amount = bcadd('0', '0', $ledgerCurrency->decimals);
+            // $this->amount = bcadd('0', '0', $ledgerCurrency->decimals);
+            $this->amount = number_format(0, $ledgerCurrency->decimals) +  number_format(0, $ledgerCurrency->decimals);
         } else {
             $this->amount = $ledgerBalance->balance;
         }
@@ -151,5 +152,4 @@ class Balance extends Message
 
         return $this;
     }
-
 }

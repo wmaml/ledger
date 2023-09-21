@@ -48,7 +48,7 @@ class LedgerCreateTablesV2 extends Migration
             $table->uuid('ledgerUuid')->index();
 
             // The [split] transaction amount
-            $table->string('amount', LedgerCurrency::AMOUNT_SIZE);
+            $table->decimal('amount', LedgerCurrency::AMOUNT_SIZE, 4);
 
             // Reference to an external entity.
             $table->uuid('journalReferenceUuid')->nullable();

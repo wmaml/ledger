@@ -64,13 +64,17 @@ class TrialBalanceReport extends AbstractReport
         $reportData->decimals = $ledgerCurrency->decimals;
         $cast = 'decimal(' . LedgerCurrency::AMOUNT_SIZE . ", $ledgerCurrency->decimals)";
         $balanceChangeQuery = DB::table($detailTable)
-            ->select(DB::raw(
-                "`$detailTable`.`ledgerUuid` AS `uuid`,"
-                . " sum(cast(`amount` AS $cast)) AS `delta`")
+            ->select(
+                DB::raw(
+                    "`$detailTable`.`ledgerUuid` AS `uuid`,"
+                        . " sum(cast(`amount` AS $cast)) AS `delta`"
+                )
             )
             ->join(
-                $entryTable, "$detailTable.journalEntryId",
-                '=', "$entryTable.journalEntryId"
+                $entryTable,
+                "$detailTable.journalEntryId",
+                '=',
+                "$entryTable.journalEntryId"
             )
             ->where('domainUuid', $ledgerDomain->domainUuid)
             ->where('currency', $message->currency)
@@ -92,7 +96,10 @@ class TrialBalanceReport extends AbstractReport
 
         // Subtract balance changes from the current balance
         $reportData->accounts = [];
-        $zero = bcadd('0', '0', $ledgerCurrency->decimals);
+
+        // $zero =  bcadd('0', '0', $ledgerCurrency->decimals);
+        $zero =  number_format(0, $ledgerCurrency->decimals);
+
         foreach ($ledgerAccounts as $ledgerAccount) {
             $account = ReportAccount::fromArray($ledgerAccount->attributesToArray());
             $uuid = $account->ledgerUuid;
@@ -185,13 +192,14 @@ class TrialBalanceReport extends AbstractReport
         $result->put('accounts', $this->accounts);
         // Return domain information
         $domain = $reportData->request->domain;
-        $result -> put(
+        $result->put(
             'domain',
             [
                 'code' => $domain->code,
                 'uuid' => $domain->uuid,
                 'name' => LedgerName::localize(
-                    $domain->uuid, $options['language']
+                    $domain->uuid,
+                    $options['language']
                 )
             ]
         );
@@ -212,7 +220,7 @@ class TrialBalanceReport extends AbstractReport
          * @var string $code
          * @var ReportAccount $account
          */
-        foreach($this->accounts as $code => $account) {
+        foreach ($this->accounts as $code => $account) {
             $account->total = $account->balance;
             $this->byParent[$account->parent] ??= [];
             if ($code !== '') {
@@ -249,11 +257,16 @@ class TrialBalanceReport extends AbstractReport
             $sum = '0';
             foreach ($this->byParent[$code] as $child) {
                 $this->rollUpAccount($child, $depth + 1);
-                $sum = bcadd($sum, $this->accounts[$child]->total, $this->decimals);
+                // $sum = bcadd($sum, $this->accounts[$child]->total, $this->decimals);
+                $sum = number_format($sum, $this->decimals) + number_format($this->accounts[$child]->total, $this->decimals);
             }
-            $this->accounts[$code]->total = bcadd(
-                $this->accounts[$code]->balance, $sum, $this->decimals
-            );
+            // $this->accounts[$code]->total = bcadd(
+            //     $this->accounts[$code]->balance,
+            //     $sum,
+            //     $this->decimals
+            // );
+            $this->accounts[$code]->total = number_format($this->accounts[$code]->balance, $this->decimals) +
+                number_format($sum, $this->decimals);
         }
     }
 }

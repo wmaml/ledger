@@ -412,7 +412,7 @@ class JournalEntryController extends Controller
 
         // Normalize the amounts and check for balance
         $postToCategory = LedgerAccount::rules()->account->postToCategory;
-        $balance = '0';
+        $balance = 0;
         $unique = [];
         $precision = $this->ledgerCurrency->decimals;
         foreach ($message->details as $line => $detail) {
@@ -457,9 +457,10 @@ class JournalEntryController extends Controller
                 }
                 $detail->reference->lookup();
             }
-            $balance = bcadd($balance, $detail->normalizeAmount($precision), $precision);
+            $balance = // bcadd($balance, $detail->normalizeAmount($precision), $precision);
+            $balance = $balance + number_format($detail->normalizeAmount($precision), $precision) 
         }
-        if (bccomp($balance, '0') !== 0) {
+        if ($balance !== 0) {
             $errors[] = __('Entry amounts are out of balance by :balance.', compact('balance'));
         }
         if (count($errors) !== 0) {

@@ -112,7 +112,9 @@ class TrialBalanceReportTest extends TestCaseWithMigrations
             'toDate' => '2001-02-28',
         ];
         $response = $this->json(
-            'post', 'api/ledger/report', $request
+            'post',
+            'api/ledger/report',
+            $request
         );
         $actual = $this->isSuccessful($response, 'report');
         $this->assertCount(138, $actual->report->accounts);
@@ -128,7 +130,9 @@ class TrialBalanceReportTest extends TestCaseWithMigrations
             'toDate' => '2001-02-28',
         ];
         $response = $this->json(
-            'post', 'api/ledger/report', $request
+            'post',
+            'api/ledger/report',
+            $request
         );
         $this->isFailure($response);
     }
@@ -144,13 +148,16 @@ class TrialBalanceReportTest extends TestCaseWithMigrations
             'toDate' => '2001-02-28',
         ];
         $response = $this->json(
-            'post', 'api/ledger/report', $request
+            'post',
+            'api/ledger/report',
+            $request
         );
         $actual = $this->isSuccessful($response, 'report');
         $this->assertCount(36, $actual->report->accounts);
         $bal = '0.00';
         foreach ($actual->report->accounts as $account) {
-            $bal = bcadd($bal, $account->total, 2);
+            // $bal = bcadd($bal, $account->total, 2);
+            $bal = number_format($bal, 2) + number_format($account->total, 2);
         }
         $this->assertEquals('0.00', $bal);
     }
@@ -168,7 +175,9 @@ class TrialBalanceReportTest extends TestCaseWithMigrations
             'toDate' => '2001-02-28',
         ];
         $response = $this->json(
-            'post', 'api/ledger/report', $request
+            'post',
+            'api/ledger/report',
+            $request
         );
         $actual = $this->isSuccessful($response, 'report');
         $this->assertCount(138, $actual->report->accounts);
@@ -189,7 +198,9 @@ class TrialBalanceReportTest extends TestCaseWithMigrations
             'toDate' => '2001-02-28',
         ];
         $response = $this->json(
-            'post', 'api/ledger/report', $request
+            'post',
+            'api/ledger/report',
+            $request
         );
         $actual = $this->isSuccessful($response, 'report');
         $this->assertCount(138, $actual->report->accounts);
@@ -210,10 +221,11 @@ class TrialBalanceReportTest extends TestCaseWithMigrations
             'toDate' => '2001-02-28',
         ];
         $response = $this->json(
-            'post', 'api/ledger/report', $request
+            'post',
+            'api/ledger/report',
+            $request
         );
         $actual = $this->isSuccessful($response, 'report');
         $this->assertCount(138, $actual->report->accounts);
     }
-
 }
