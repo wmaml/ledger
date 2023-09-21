@@ -42,9 +42,9 @@ class Balance extends Message
      */
     public function addAmountTo(string &$amount, int $decimals)
     {
-        // $amount = bcadd($amount, $this->amount, $decimals);
-        $amount = number_format($amount, $decimals) +  number_format($this->amount, $decimals);
-        return $amount;
+        $amount = bcadd($amount, $this->amount, $decimals);
+        // $amount = number_format($amount, $decimals) + number_format($this->amount, $decimals);
+        return number_format($amount, 4);
     }
 
     /**
