@@ -40,7 +40,7 @@ class Balance extends Message
      * @param int $decimals Number of decimals to keep.
      * @return string The updated amount.
      */
-    public function addAmountTo(string &$amount, int $decimals): string
+    public function addAmountTo(string &$amount, int $decimals)
     {
         // $amount = bcadd($amount, $this->amount, $decimals);
         $amount = number_format($amount, $decimals) +  number_format($this->amount, $decimals);
