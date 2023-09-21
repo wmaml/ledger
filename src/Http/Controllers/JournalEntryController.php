@@ -113,7 +113,7 @@ class JournalEntryController extends Controller
                 // );
                 LedgerBalance::where('id', $ledgerBalance->id)
                     ->update([
-                        'balance' => DB::raw("CAST(balance as DECIMAL(32, 4)) + CAST(" + $journalDetail->amount) + " as DECIMAL(32, 4))"
+                        'balance' => DB::raw("CAST(balance as DECIMAL(32, 4)) + CAST(" . $journalDetail->amount) . " as DECIMAL(32, 4))"
                     ]);
                 $ledgerBalance->save();
             }
