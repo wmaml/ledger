@@ -129,7 +129,7 @@ class LedgerCreateTablesV2 extends Migration
             $table->foreignUuid('ledgerUuid');
             $table->foreignUuid('domainUuid');
             $table->string('currency', LedgerCurrency::CODE_SIZE);
-            $table->string('balance', LedgerCurrency::AMOUNT_SIZE);
+            $table->decimal('balance', LedgerCurrency::AMOUNT_SIZE, 4);
             $table->timestamps(6);
 
             $table->unique(['ledgerUuid', 'domainUuid', 'currency']);
@@ -181,7 +181,6 @@ class LedgerCreateTablesV2 extends Migration
             // The last journal entry when the report was generated.
             $table->bigInteger('journalEntryId');
             $table->longText('reportData');
-
         });
 
         Schema::create('sub_journals', function (Blueprint $table) {
@@ -192,7 +191,5 @@ class LedgerCreateTablesV2 extends Migration
                 ->useCurrentOnUpdate()->nullable();
             $table->timestamps(6);
         });
-
     }
-
 }
