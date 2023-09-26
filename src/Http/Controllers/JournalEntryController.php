@@ -89,7 +89,6 @@ class JournalEntryController extends Controller
                 $balance = 0;
                 // here we can calculate all
             } else {
-                // $dd = DB::select("SELECT sum(journal_details.amount) as balance FROM ledger_balances JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency WHERE ledger_balances.id = 9 LIMIT 40");
                 $balance = DB::scalar(
                     "SELECT sum(journal_details.amount) as balance 
                     FROM ledger_balances 
