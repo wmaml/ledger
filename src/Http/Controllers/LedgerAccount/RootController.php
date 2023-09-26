@@ -7,6 +7,9 @@ namespace Abivia\Ledger\Http\Controllers\LedgerAccount;
 use Abivia\Ledger\Exceptions\Breaker;
 use Abivia\Ledger\Helpers\Package;
 use Abivia\Ledger\Http\Controllers\LedgerAccountController;
+
+use Abivia\Ledger\Http\Controllers\JournalEntryController;
+
 use Abivia\Ledger\Messages\Account;
 use Abivia\Ledger\Messages\Balance;
 use Abivia\Ledger\Messages\Create;
