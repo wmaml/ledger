@@ -73,7 +73,7 @@ class JournalEntryController extends Controller
         return $journalEntry;
     }
 
-    public function create_balance_point(long $balance_id): void
+    public function create_balance_point(int $balance_id): void
     {
         $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
         $today_point = LedgerBalancePoint::where([
