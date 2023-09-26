@@ -135,6 +135,20 @@ class LedgerCreateTablesV2 extends Migration
             $table->unique(['ledgerUuid', 'domainUuid', 'currency']);
         });
 
+        // Actual account balances by domain and currency.
+        Schema::create('ledger_balances', function (Blueprint $table) {
+            // Primary key, just use default since access is composite
+            $table->bigIncrements('id');
+            $table->bigInteger("balance_id");
+            $table->string('balance', LedgerCurrency::AMOUNT_SIZE);
+            $table->dateTime('start_date', 6);
+            $table->dateTime('balance_updated', 6);
+            $table->bigInteger('last_in_transaction_id');
+            $table->bigInteger('last_out_transaction_id');
+            $table->timestamps(6);
+        });
+
+
         // Ledger currencies
         Schema::create('ledger_currencies', function (Blueprint $table) {
             $table->string('code', LedgerCurrency::CODE_SIZE)->primary();
@@ -181,7 +195,6 @@ class LedgerCreateTablesV2 extends Migration
             // The last journal entry when the report was generated.
             $table->bigInteger('journalEntryId');
             $table->longText('reportData');
-
         });
 
         Schema::create('sub_journals', function (Blueprint $table) {
@@ -192,7 +205,5 @@ class LedgerCreateTablesV2 extends Migration
                 ->useCurrentOnUpdate()->nullable();
             $table->timestamps(6);
         });
-
     }
-
 }
