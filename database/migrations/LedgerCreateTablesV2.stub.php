@@ -22,6 +22,8 @@ class LedgerCreateTablesV2 extends Migration
         Schema::dropIfExists('journal_references');
         Schema::dropIfExists('ledger_accounts');
         Schema::dropIfExists('ledger_balances');
+        Schema::dropIfExists('ledger_balance_points');
+
         Schema::dropIfExists('ledger_currencies');
         Schema::dropIfExists('ledger_domains');
         Schema::dropIfExists('ledger_names');
@@ -136,7 +138,7 @@ class LedgerCreateTablesV2 extends Migration
         });
 
         // Actual account balances by domain and currency.
-        Schema::create('ledger_balances', function (Blueprint $table) {
+        Schema::create('ledger_balance_points', function (Blueprint $table) {
             // Primary key, just use default since access is composite
             $table->bigIncrements('id');
             $table->bigInteger("balance_id");
