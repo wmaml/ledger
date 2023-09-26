@@ -153,7 +153,7 @@ class JournalEntryController extends Controller
                 // );
 
                 // make point
-
+                $this->create_balance_point($ledgerBalance->id);
 
                 LedgerBalance::where('id', $ledgerBalance->id)
                     ->update([
