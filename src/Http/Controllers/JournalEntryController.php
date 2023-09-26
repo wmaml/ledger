@@ -18,6 +18,7 @@ use Abivia\Ledger\Traits\Audited;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Abivia\Ledger\Models\LedgerBalancePoint;
 
 class JournalEntryController extends Controller
 {
@@ -55,6 +56,8 @@ class JournalEntryController extends Controller
             $journalEntry->fillFromMessage($message);
             $journalEntry->save();
             $journalEntry->refresh();
+
+            // 
             // Create the detail records
             $this->addDetails($journalEntry, $message);
             DB::commit();
@@ -69,6 +72,44 @@ class JournalEntryController extends Controller
 
         return $journalEntry;
     }
+
+    public function create_balance_point(int $balance_id): void
+    {
+        $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
+        $today_point = LedgerBalancePoint::where([
+            ["balance_id", "=", $balance_id],
+            ["start_date", "=", $start_of_day]
+        ])->first();
+        if ($today_point == null) {
+            $last_point = LedgerBalancePoint::where([
+                ["balance_id", "=", $balance_id],
+                ["start_date", "<", $start_of_day]
+            ])->orderBy("start_date", "DESC")->first();
+            if ($last_point == null) {
+                $balance = 0;
+                // here we can calculate all
+            } else {
+                // $dd = DB::select("SELECT sum(journal_details.amount) as balance FROM ledger_balances JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency WHERE ledger_balances.id = 9 LIMIT 40");
+                $balance = DB::scalar(
+                    "SELECT sum(journal_details.amount) as balance 
+                    FROM ledger_balances 
+                    JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
+                    JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
+                    WHERE ledger_balances.id = :balance_id AND journal_entries.transDate >= :date_from AND journal_entries.transDate < :date_to",
+                    ["balance_id" => 8, "date_from" => $last_point->start_date, "date_to" => $start_of_day]
+                );
+            }
+            LedgerBalancePoint::create([
+                'balance_id' => $balance_id,
+                'balance' => $balance,
+                'start_date' => $start_of_day,
+                'balance_updated' => \Carbon\Carbon::now()->format("Y-m-d H:i:s.u"),
+                'last_in_transaction_id' => 0,
+                'last_out_transaction_id' => 0
+            ]);
+        }
+    }
+
 
     /**
      * Write the journal detail records and update balances.
@@ -111,6 +152,10 @@ class JournalEntryController extends Controller
                 //     $journalDetail->amount,
                 //     $this->ledgerCurrency->decimals
                 // );
+
+                // make point
+
+
                 LedgerBalance::where('id', $ledgerBalance->id)
                     ->update([
                         'balance' => DB::raw("CAST(balance as DECIMAL(32, 4)) + CAST(" . $journalDetail->amount . " as DECIMAL(32, 4))")

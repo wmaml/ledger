@@ -148,6 +148,8 @@ class LedgerCreateTablesV2 extends Migration
             $table->bigInteger('last_in_transaction_id');
             $table->bigInteger('last_out_transaction_id');
             $table->timestamps(6);
+
+            $table->unique(['balance_id', 'start_date']);
         });
 
 
