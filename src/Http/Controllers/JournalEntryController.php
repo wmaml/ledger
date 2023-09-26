@@ -139,12 +139,13 @@ class JournalEntryController extends Controller
 
             if ($ledgerBalance === null) {
                 /** @noinspection PhpDynamicAsStaticMethodCallInspection */
-                LedgerBalance::create([
+                $ledgerBalance = LedgerBalance::create([
                     'ledgerUuid' => $journalDetail->ledgerUuid,
                     'domainUuid' => $this->ledgerDomain->domainUuid,
                     'currency' => $this->ledgerCurrency->code,
                     'balance' => $journalDetail->amount,
                 ]);
+                $this->create_balance_point($ledgerBalance->id);
             } else {
                 // $ledgerBalance->balance = bcadd(
                 //     $ledgerBalance->balance,
