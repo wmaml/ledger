@@ -20,6 +20,7 @@ class LedgerBalanceHistory extends Model
         'start_date',
         'balance_updated',
         'last_in_transaction_id',
-        'last_out_transaction_id'
+        'last_out_transaction_id',
+        'last_transaction_id'
     ];
 }
