@@ -76,6 +76,7 @@ class JournalEntryController extends Controller
     public function create_balance_point(int $balance_id): void
     {
         $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
+
         $today_point = LedgerBalancePoint::where([
             ["balance_id", "=", $balance_id],
             ["start_date", "=", $start_of_day]
@@ -88,22 +89,22 @@ class JournalEntryController extends Controller
             if ($last_point == null) {
                 // $balance = 0;
                 $balance = DB::scalar(
-                    "SELECT sum(journal_details.amount) as balance 
+                    "SELECT COALESCE(sum(journal_details.amount), 0) as balance 
                     FROM ledger_balances 
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
                     WHERE ledger_balances.id = :balance_id AND journal_entries.transDate < :date_to",
-                    ["balance_id" => 8, "date_to" => $start_of_day]
+                    ["balance_id" => $balance_id, "date_to" => $start_of_day]
                 );
                 // here we can calculate all
             } else {
                 $balance = DB::scalar(
-                    "SELECT sum(journal_details.amount) as balance 
+                    "SELECT COALESCE(sum(journal_details.amount), 0) as balance 
                     FROM ledger_balances 
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
                     WHERE ledger_balances.id = :balance_id AND journal_entries.transDate >= :date_from AND journal_entries.transDate < :date_to",
-                    ["balance_id" => 8, "date_from" => $last_point->start_date, "date_to" => $start_of_day]
+                    ["balance_id" => $balance_id, "date_from" => $last_point->start_date, "date_to" => $start_of_day]
                 );
             }
             LedgerBalancePoint::create([
