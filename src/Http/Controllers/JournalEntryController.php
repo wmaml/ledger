@@ -86,7 +86,15 @@ class JournalEntryController extends Controller
                 ["start_date", "<", $start_of_day]
             ])->orderBy("start_date", "DESC")->first();
             if ($last_point == null) {
-                $balance = 0;
+                // $balance = 0;
+                $balance = DB::scalar(
+                    "SELECT sum(journal_details.amount) as balance 
+                    FROM ledger_balances 
+                    JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
+                    JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
+                    WHERE ledger_balances.id = :balance_id AND journal_entries.transDate < :date_to",
+                    ["balance_id" => 8, "date_to" => $start_of_day]
+                );
                 // here we can calculate all
             } else {
                 $balance = DB::scalar(
