@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class LedgerBalanceHistory extends Model
 {
     use HasFactory;
-
+    protected $table = "ledger_balance_history";
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
     protected $fillable = [
