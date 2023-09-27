@@ -145,6 +145,7 @@ class LedgerCreateTablesV2 extends Migration
             $table->string('balance', LedgerCurrency::AMOUNT_SIZE);
             $table->dateTime('start_date', 6);
             $table->dateTime('balance_updated', 6);
+            $table->bigInteger('last_transaction_id')->nullable();
             $table->bigInteger('last_in_transaction_id')->nullable();
             $table->bigInteger('last_out_transaction_id')->nullable();
             $table->timestamps(6);
