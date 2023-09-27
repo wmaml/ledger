@@ -22,7 +22,7 @@ class LedgerCreateTablesV2 extends Migration
         Schema::dropIfExists('journal_references');
         Schema::dropIfExists('ledger_accounts');
         Schema::dropIfExists('ledger_balances');
-        Schema::dropIfExists('ledger_balance_points');
+        Schema::dropIfExists('ledger_balance_history');
 
         Schema::dropIfExists('ledger_currencies');
         Schema::dropIfExists('ledger_domains');
@@ -138,15 +138,15 @@ class LedgerCreateTablesV2 extends Migration
         });
 
         // Actual account balances by domain and currency.
-        Schema::create('ledger_balance_points', function (Blueprint $table) {
+        Schema::create('ledger_balance_history', function (Blueprint $table) {
             // Primary key, just use default since access is composite
             $table->bigIncrements('id');
             $table->bigInteger("balance_id");
             $table->string('balance', LedgerCurrency::AMOUNT_SIZE);
             $table->dateTime('start_date', 6);
             $table->dateTime('balance_updated', 6);
-            $table->bigInteger('last_in_transaction_id');
-            $table->bigInteger('last_out_transaction_id');
+            $table->bigInteger('last_in_transaction_id')->nullable();
+            $table->bigInteger('last_out_transaction_id')->nullable();
             $table->timestamps(6);
 
             $table->unique(['balance_id', 'start_date']);

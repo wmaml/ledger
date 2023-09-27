@@ -18,7 +18,7 @@ use Abivia\Ledger\Traits\Audited;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Abivia\Ledger\Models\LedgerBalancePoint;
+use Abivia\Ledger\Models\LedgerBalanceHistory;
 
 class JournalEntryController extends Controller
 {
@@ -77,15 +77,18 @@ class JournalEntryController extends Controller
     {
         $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
 
-        $today_point = LedgerBalancePoint::where([
+        $today_point = LedgerBalanceHistory::where([
             ["balance_id", "=", $balance_id],
             ["start_date", "=", $start_of_day]
         ])->first();
         if ($today_point == null) {
-            $last_point = LedgerBalancePoint::where([
+            $last_point = LedgerBalanceHistory::where([
                 ["balance_id", "=", $balance_id],
                 ["start_date", "<", $start_of_day]
             ])->orderBy("start_date", "DESC")->first();
+            $last_in_transaction_id = null;
+            $last_out_transaction_id = null;
+
             if ($last_point == null) {
                 // $balance = 0;
                 $balance = DB::scalar(
@@ -94,6 +97,30 @@ class JournalEntryController extends Controller
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
                     WHERE ledger_balances.id = :balance_id AND journal_entries.transDate < :date_to",
+                    ["balance_id" => $balance_id, "date_to" => $start_of_day]
+                );
+                $last_in_transaction_id = DB::scalar(
+                    "SELECT journal_details.journalDetailId
+                    FROM ledger_balances
+                    JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
+                    JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
+                    journal_entries.currency = ledger_balances.currency
+                    WHERE ledger_balances.id = :balance_id AND journal_entries.transDate < :date_to
+                    AND journal_details.amount >= 0
+                    ORDER BY journal_details.journalDetailId DESC
+                    LIMIT 1",
+                    ["balance_id" => $balance_id, "date_to" => $start_of_day]
+                );
+                $last_out_transaction_id = DB::scalar(
+                    "SELECT journal_details.journalDetailId
+                    FROM ledger_balances
+                    JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
+                    JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
+                    journal_entries.currency = ledger_balances.currency
+                    WHERE ledger_balances.id = :balance_id AND journal_entries.transDate < :date_to
+                    AND journal_details.amount < 0
+                    ORDER BY journal_details.journalDetailId DESC
+                    LIMIT 1",
                     ["balance_id" => $balance_id, "date_to" => $start_of_day]
                 );
                 // here we can calculate all
@@ -106,14 +133,38 @@ class JournalEntryController extends Controller
                     WHERE ledger_balances.id = :balance_id AND journal_entries.transDate >= :date_from AND journal_entries.transDate < :date_to",
                     ["balance_id" => $balance_id, "date_from" => $last_point->start_date, "date_to" => $start_of_day]
                 );
+                $last_in_transaction_id = DB::scalar(
+                    "SELECT journal_details.journalDetailId
+                    FROM ledger_balances
+                    JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
+                    JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
+                    journal_entries.currency = ledger_balances.currency
+                    WHERE ledger_balances.id = :balance_id AND journal_entries.transDate >= :date_from AND journal_entries.transDate < :date_to
+                    AND journal_details.amount >= 0
+                    ORDER BY journal_details.journalDetailId DESC
+                    LIMIT 1",
+                    ["balance_id" => $balance_id, "date_from" => $last_point->start_date, "date_to" => $start_of_day]
+                );
+                $last_out_transaction_id = DB::scalar(
+                    "SELECT journal_details.journalDetailId
+                    FROM ledger_balances
+                    JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
+                    JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
+                    journal_entries.currency = ledger_balances.currency
+                    WHERE ledger_balances.id = :balance_id AND journal_entries.transDate >= :date_from AND journal_entries.transDate < :date_to
+                    AND journal_details.amount < 0
+                    ORDER BY journal_details.journalDetailId DESC
+                    LIMIT 1",
+                    ["balance_id" => $balance_id, "date_from" => $last_point->start_date, "date_to" => $start_of_day]
+                );
             }
-            LedgerBalancePoint::create([
+            LedgerBalanceHistory::create([
                 'balance_id' => $balance_id,
                 'balance' => $balance,
                 'start_date' => $start_of_day,
                 'balance_updated' => \Carbon\Carbon::now()->format("Y-m-d H:i:s.u"),
-                'last_in_transaction_id' => 0,
-                'last_out_transaction_id' => 0
+                'last_in_transaction_id' => $last_in_transaction_id,
+                'last_out_transaction_id' => $last_out_transaction_id
             ]);
         }
     }

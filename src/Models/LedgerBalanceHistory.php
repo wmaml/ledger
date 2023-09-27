@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 
-class LedgerBalancePoint extends Model
+class LedgerBalanceHistory extends Model
 {
     use HasFactory;
 
