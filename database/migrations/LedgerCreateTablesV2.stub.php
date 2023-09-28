@@ -152,7 +152,7 @@ class LedgerCreateTablesV2 extends Migration
             $table->bigInteger('last_out_transaction_id')->nullable();
             $table->timestamps(6);
 
-            $table->unique(['ledgerUuid', 'domainUuid', 'currency', 'start_date']);
+            $table->unique(['ledgerUuid', 'domainUuid', 'currency', 'start_date'], "unique_id");
         });
 
 
