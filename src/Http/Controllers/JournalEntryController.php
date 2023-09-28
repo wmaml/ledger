@@ -73,21 +73,21 @@ class JournalEntryController extends Controller
         return $journalEntry;
     }
 
-    public function create_balance_point(LedgerBalance $balance): void
+    public function create_balance_point(LedgerBalance $ledger_balance): void
     {
         $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
 
         $today_point = LedgerBalanceHistory::where([
-            ["ledgerUuid", "=", $balance->ledgerUuid],
-            ["domainUuid", "=", $balance->domainUuid],
-            ["currency", "=", $balance->currency],
+            ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
+            ["domainUuid", "=", $ledger_balance->domainUuid],
+            ["currency", "=", $ledger_balance->currency],
             ["start_date", "=", $start_of_day]
         ])->first();
         if ($today_point == null) {
             $last_point = LedgerBalanceHistory::where([
-                ["ledgerUuid", "=", $balance->ledgerUuid],
-                ["domainUuid", "=", $balance->domainUuid],
-                ["currency", "=", $balance->currency],
+                ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
+                ["domainUuid", "=", $ledger_balance->domainUuid],
+                ["currency", "=", $ledger_balance->currency],
                 ["start_date", "<", $start_of_day]
             ])->orderBy("start_date", "DESC")->first();
             $last_in_transaction_id = null;
@@ -95,6 +95,7 @@ class JournalEntryController extends Controller
             $last_transaction_id = null;
             if ($last_point == null) {
                 // $balance = 0;
+
                 $balance = DB::scalar(
                     "SELECT COALESCE(sum(journal_details.amount), 0) as balance 
                     FROM ledger_balances 
@@ -106,9 +107,9 @@ class JournalEntryController extends Controller
                         ledger_balances.currency = :currency AND 
                         journal_entries.transDate < :date_to",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_to" => $start_of_day
                     ]
                 );
@@ -126,9 +127,9 @@ class JournalEntryController extends Controller
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_to" => $start_of_day
                     ]
                 );
@@ -147,9 +148,9 @@ class JournalEntryController extends Controller
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_to" => $start_of_day
                     ]
                 );
@@ -168,9 +169,9 @@ class JournalEntryController extends Controller
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_to" => $start_of_day
                     ]
                 );
@@ -188,9 +189,9 @@ class JournalEntryController extends Controller
                         journal_entries.transDate >= :date_from AND 
                         journal_entries.transDate < :date_to",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_from" => $last_point->start_date,
                         "date_to" => $start_of_day
                     ]
@@ -210,9 +211,9 @@ class JournalEntryController extends Controller
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_from" => $last_point->start_date,
                         "date_to" => $start_of_day
                     ]
@@ -233,9 +234,9 @@ class JournalEntryController extends Controller
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_from" => $last_point->start_date,
                         "date_to" => $start_of_day
                     ]
@@ -256,18 +257,18 @@ class JournalEntryController extends Controller
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
                     [
-                        "ledgerUuid" => $balance->ledgerUuid,
-                        "domainUuid" => $balance->domainUuid,
-                        "currency" => $balance->currency,
+                        "ledgerUuid" => $ledger_balance->ledgerUuid,
+                        "domainUuid" => $ledger_balance->domainUuid,
+                        "currency" => $ledger_balance->currency,
                         "date_from" => $last_point->start_date,
                         "date_to" => $start_of_day
                     ]
                 );
             }
             LedgerBalanceHistory::create([
-                "ledgerUuid" => $balance->ledgerUuid,
-                "domainUuid" => $balance->domainUuid,
-                "currency" => $balance->currency,
+                "ledgerUuid" => $ledger_balance->ledgerUuid,
+                "domainUuid" => $ledger_balance->domainUuid,
+                "currency" => $ledger_balance->currency,
                 'balance' => $balance,
                 'start_date' => $start_of_day,
                 'balance_updated' => \Carbon\Carbon::now()->format("Y-m-d H:i:s.u"),
