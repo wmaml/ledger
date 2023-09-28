@@ -372,7 +372,7 @@ class RootController extends LedgerAccountController
                     $ledgerBalance->save();
 
                     $jec = new JournalEntryController;
-                    $jec->create_balance_point($ledgerBalance->id);
+                    $jec->create_balance_point($ledgerBalance);
                 }
             }
         }

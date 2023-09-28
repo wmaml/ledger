@@ -15,7 +15,9 @@ class LedgerBalanceHistory extends Model
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
     protected $fillable = [
-        'balance_id',
+        'ledgerUuid',
+        'domainUuid',
+        'currency',
         'balance',
         'start_date',
         'balance_updated',

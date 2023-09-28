@@ -141,7 +141,9 @@ class LedgerCreateTablesV2 extends Migration
         Schema::create('ledger_balance_history', function (Blueprint $table) {
             // Primary key, just use default since access is composite
             $table->bigIncrements('id');
-            $table->bigInteger("balance_id");
+            $table->bigInteger("ledgerUuid");
+            $table->bigInteger("domainUuid");
+            $table->string('currency', LedgerCurrency::CODE_SIZE);
             $table->string('balance', LedgerCurrency::AMOUNT_SIZE);
             $table->dateTime('start_date', 6);
             $table->dateTime('balance_updated', 6);
@@ -150,7 +152,7 @@ class LedgerCreateTablesV2 extends Migration
             $table->bigInteger('last_out_transaction_id')->nullable();
             $table->timestamps(6);
 
-            $table->unique(['balance_id', 'start_date']);
+            $table->unique(['ledgerUuid', 'domainUuid', 'currency', 'start_date']);
         });
 
 
