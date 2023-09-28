@@ -78,7 +78,9 @@ class JournalEntryController extends Controller
         $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
 
         $today_point = LedgerBalanceHistory::where([
-            ["balance_id", "=", $balance->id],
+            ["ledgerUuid", "=", $balance->ledgerUuid],
+            ["domainUuid", "=", $balance->domainUuid],
+            ["currency", "=", $balance->currency],
             ["start_date", "=", $start_of_day]
         ])->first();
         if ($today_point == null) {
