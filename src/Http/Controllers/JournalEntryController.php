@@ -673,7 +673,7 @@ class JournalEntryController extends Controller
             }
             $balance = bcadd($balance, $detail->normalizeAmount($precision), $precision);
         }
-        if (bccomp($balance, '0') !== 0) {
+        if (bccomp($balance, '0', $precision) !== 0) {
             $errors[] = __('Entry amounts are out of balance by :balance.', compact('balance'));
         }
         if (count($errors) !== 0) {

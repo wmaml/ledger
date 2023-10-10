@@ -1,6 +1,8 @@
 <?php
+
 /** @noinspection PhpArrayShapeAttributeCanBeAddedInspection */
 /** @noinspection PhpDynamicAsStaticMethodCallInspection */
+
 declare(strict_types=1);
 
 namespace Abivia\Ledger\Http\Controllers;
@@ -301,7 +303,7 @@ class LedgerAccountController extends Controller
                             Breaker::RULE_VIOLATION,
                             [__(
                                 "Can't make account a non-category because at least"
-                                . " one sub-account is a category."
+                                    . " one sub-account is a category."
                             )]
                         );
                     }
@@ -377,10 +379,11 @@ class LedgerAccountController extends Controller
             // Does closing a parent account just mean you can't post to it?
             // For lack of answers to these questions...
             // TODO: implement this.
-            throw Breaker::withCode(
-                Breaker::NOT_IMPLEMENTED,
-                [__("Account closing not yet implemented.")]
-            );
+            $ledgerAccount->closed = $message->closed;
+            // throw Breaker::withCode(
+            //     Breaker::NOT_IMPLEMENTED,
+            //     [__("Account closing not yet implemented.")]
+            // );
         }
     }
 
@@ -407,7 +410,7 @@ class LedgerAccountController extends Controller
                     Breaker::RULE_VIOLATION,
                     __(
                         "An account with the same name already exists for account"
-                        . " :code in language :language",
+                            . " :code in language :language",
                         ['code' => $ledgerAccount->code, 'language' => $name->language]
                     )
                 );
@@ -416,10 +419,11 @@ class LedgerAccountController extends Controller
             // Ensure there is at least one name remaining
             if (
                 LedgerName::where('ownerUuid', $ledgerAccount->ledgerUuid)
-                    ->count() === 0
+                ->count() === 0
             ) {
                 throw Breaker::withCode(
-                    Breaker::BAD_REQUEST, 'Account must have at least one name.'
+                    Breaker::BAD_REQUEST,
+                    'Account must have at least one name.'
                 );
             }
         }
@@ -442,7 +446,8 @@ class LedgerAccountController extends Controller
             $ledgerParent = LedgerAccount::findWith($message->parent)->first();
             if ($ledgerParent === null) {
                 throw Breaker::withCode(
-                    Breaker::BAD_ACCOUNT, [__("Specified parent not found.")]
+                    Breaker::BAD_ACCOUNT,
+                    [__("Specified parent not found.")]
                 );
             }
             // Ensure the account graph is acyclic and parents reach the root.
@@ -455,5 +460,4 @@ class LedgerAccountController extends Controller
 
         return $ledgerParent;
     }
-
 }
