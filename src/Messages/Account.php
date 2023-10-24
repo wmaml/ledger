@@ -10,7 +10,6 @@ use Abivia\Ledger\Models\LedgerAccount;
 class Account extends Message
 {
     use HasCodes, HasNames;
-
     /**
      * @var bool If set `true`, this will be a category account.
      */
@@ -180,5 +179,4 @@ class Account extends Message
 
         return $this;
     }
-
 }

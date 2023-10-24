@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as DbBuilder;
 use Illuminate\Support\HigherOrderCollectionProxy;
 use stdClass;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Ledger Account Definition
@@ -52,6 +53,7 @@ class LedgerAccount extends Model
     use HasNames;
     use HasRevisions;
     use UuidPrimaryKey;
+    use SoftDeletes;
 
     const CODE_SIZE = 32;
     /**
@@ -274,7 +276,8 @@ class LedgerAccount extends Model
     public static function notInitializedError(): void
     {
         throw Breaker::withCode(
-            Breaker::RULE_VIOLATION, __('Ledger has not been initialized.')
+            Breaker::RULE_VIOLATION,
+            __('Ledger has not been initialized.')
         );
     }
 
@@ -516,9 +519,10 @@ class LedgerAccount extends Model
      * @throws Exception
      */
     public static function whereEntity(
-        string $operator, EntityRef $entityRef, Builder|DbBuilder $query = null
-    ): Builder
-    {
+        string $operator,
+        EntityRef $entityRef,
+        Builder|DbBuilder $query = null
+    ): Builder {
         if ($query === null) {
             $query = self::query();
         }
@@ -546,5 +550,4 @@ class LedgerAccount extends Model
 
         return $finder;
     }
-
 }
