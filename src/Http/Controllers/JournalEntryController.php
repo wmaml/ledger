@@ -73,9 +73,42 @@ class JournalEntryController extends Controller
         return $journalEntry;
     }
 
-    public function create_balance_point(LedgerBalance $ledger_balance): void
+    public function set_period_balances($ledger_balance, $transDate)
     {
-        $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
+        // 
+        $start_of_day = \Carbon\Carbon::createFromFormat("Y-m-d H:i:s", $transDate)->startOfDay()->format("Y-m-d H:i:s.u");
+        $today = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
+
+        if ($start_of_day == $today) {
+            $this->create_balance_point($ledger_balance); // standart
+            return;
+        }
+
+        if ($start_of_day > $today) {
+            $this->create_balance_point($ledger_balance); // standart
+            return;
+        }
+        $this->create_balance_point($ledger_balance, $start_of_day, true);
+        $next_points = LedgerBalanceHistory::where([
+            ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
+            ["domainUuid", "=", $ledger_balance->domainUuid],
+            ["currency", "=", $ledger_balance->currency],
+            ["start_date", ">", $start_of_day]
+        ])->orderBy("start_date", "ASC")->get();
+        foreach ($next_points as $point) {
+            $this->create_balance_point($ledger_balance, $point->start_date, true);
+            // $this->set_balance_history($point, $ledger_balance);
+        }
+    }
+
+    public function create_balance_point(LedgerBalance $ledger_balance, $datetime = null, $update = false): void
+    {
+        if ($datetime == null) {
+            $start_of_day = \Carbon\Carbon::now()->startOfDay()->format("Y-m-d H:i:s.u");
+        } else {
+            $start_of_day = $datetime;
+        }
+
 
         $today_point = LedgerBalanceHistory::where([
             ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
@@ -83,7 +116,7 @@ class JournalEntryController extends Controller
             ["currency", "=", $ledger_balance->currency],
             ["start_date", "=", $start_of_day]
         ])->first();
-        if ($today_point == null) {
+        if ($today_point == null || $update == true) {
             $last_point = LedgerBalanceHistory::where([
                 ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
                 ["domainUuid", "=", $ledger_balance->domainUuid],
@@ -196,6 +229,7 @@ class JournalEntryController extends Controller
                         "date_to" => $start_of_day
                     ]
                 );
+                $balance = bcadd($last_point->balance, $balance, 4);
                 $last_transaction_id = DB::scalar(
                     "SELECT journal_details.journalDetailId
                     FROM ledger_balances
@@ -265,17 +299,30 @@ class JournalEntryController extends Controller
                     ]
                 );
             }
-            LedgerBalanceHistory::create([
-                "ledgerUuid" => $ledger_balance->ledgerUuid,
-                "domainUuid" => $ledger_balance->domainUuid,
-                "currency" => $ledger_balance->currency,
-                'balance' => $balance,
-                'start_date' => $start_of_day,
-                'balance_updated' => \Carbon\Carbon::now()->format("Y-m-d H:i:s.u"),
-                'last_in_transaction_id' => $last_in_transaction_id,
-                'last_out_transaction_id' => $last_out_transaction_id,
-                'last_transaction_id' => $last_transaction_id
-            ]);
+            if ($today_point == null) {
+                LedgerBalanceHistory::create([
+                    "ledgerUuid" => $ledger_balance->ledgerUuid,
+                    "domainUuid" => $ledger_balance->domainUuid,
+                    "currency" => $ledger_balance->currency,
+                    'balance' => $balance,
+                    'start_date' => $start_of_day,
+                    'balance_updated' => \Carbon\Carbon::now()->format("Y-m-d H:i:s.u"),
+                    'last_in_transaction_id' => $last_in_transaction_id,
+                    'last_out_transaction_id' => $last_out_transaction_id,
+                    'last_transaction_id' => $last_transaction_id
+                ]);
+            } else {
+                $today_point->ledgerUuid = $ledger_balance->ledgerUuid;
+                $today_point->domainUuid = $ledger_balance->domainUuid;
+                $today_point->currency = $ledger_balance->currency;
+                $today_point->balance = $balance;
+                $today_point->start_date = $start_of_day;
+                $today_point->balance_updated = \Carbon\Carbon::now()->format("Y-m-d H:i:s.u");
+                $today_point->last_in_transaction_id = $last_in_transaction_id;
+                $today_point->last_out_transaction_id = $last_out_transaction_id;
+                $today_point->last_transaction_id = $last_transaction_id;
+                $today_point->save();
+            }
         }
     }
 
@@ -315,7 +362,8 @@ class JournalEntryController extends Controller
                     'currency' => $this->ledgerCurrency->code,
                     'balance' => $journalDetail->amount,
                 ]);
-                $this->create_balance_point($ledgerBalance);
+                // $this->create_balance_point($ledgerBalance);
+                $this->set_period_balances($ledgerBalance, $journalEntry->transDate);
             } else {
                 // $ledgerBalance->balance = bcadd(
                 //     $ledgerBalance->balance,
@@ -324,7 +372,8 @@ class JournalEntryController extends Controller
                 // );
 
                 // make point
-                $this->create_balance_point($ledgerBalance);
+                // $this->create_balance_point($ledgerBalance);
+                $this->set_period_balances($ledgerBalance, $journalEntry->transDate);
 
                 LedgerBalance::where('id', $ledgerBalance->id)
                     ->update([
