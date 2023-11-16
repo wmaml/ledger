@@ -88,7 +88,7 @@ class JournalEntryController extends Controller
             $this->create_balance_point($ledger_balance); // standart
             return;
         }
-        $this->create_balance_point($ledger_balance, $start_of_day, true);
+        $this->create_balance_point($ledger_balance, $start_of_day, false);
         $next_points = LedgerBalanceHistory::where([
             ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
             ["domainUuid", "=", $ledger_balance->domainUuid],
@@ -299,6 +299,8 @@ class JournalEntryController extends Controller
                     ]
                 );
             }
+
+
             if ($today_point == null) {
                 LedgerBalanceHistory::create([
                     "ledgerUuid" => $ledger_balance->ledgerUuid,
