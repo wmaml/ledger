@@ -496,6 +496,7 @@ class JournalEntryController extends Controller
         /** @noinspection PhpDynamicAsStaticMethodCallInspection */
         $this->ledgerCurrency = LedgerCurrency::find($currency);
         if ($this->ledgerCurrency === null) {
+            throw new Exception(json_encode([__('Journal entry :id does not exist', ['id' => $id])]));
             throw Breaker::withCode(
                 Breaker::INVALID_DATA,
                 [__('Currency :code not found.', ['code' => $currency])]
@@ -702,10 +703,10 @@ class JournalEntryController extends Controller
             }
             // Check that each account only appears once.
             if (isset($unique[$ledgerAccount->ledgerUuid])) {
-                $errors[] = __(
-                    'The account :code cannot appear more than once in an entry',
-                    ['code' => $ledgerAccount->code]
-                );
+                // $errors[] = __(
+                //     'The account :code cannot appear more than once in an entry',
+                //     ['code' => $ledgerAccount->code]
+                // );
                 continue;
             }
             $unique[$ledgerAccount->ledgerUuid] = true;
