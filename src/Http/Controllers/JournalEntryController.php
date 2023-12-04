@@ -703,10 +703,10 @@ class JournalEntryController extends Controller
             }
             // Check that each account only appears once.
             if (isset($unique[$ledgerAccount->ledgerUuid])) {
-                // $errors[] = __(
-                //     'The account :code cannot appear more than once in an entry',
-                //     ['code' => $ledgerAccount->code]
-                // );
+                $errors[] = __(
+                    'The account :code cannot appear more than once in an entry',
+                    ['code' => $ledgerAccount->code]
+                );
                 continue;
             }
             $unique[$ledgerAccount->ledgerUuid] = true;
