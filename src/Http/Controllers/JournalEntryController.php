@@ -130,7 +130,7 @@ class JournalEntryController extends Controller
                 // $balance = 0;
 
                 $balance = DB::scalar(
-                    "SELECT COALESCE(sum(journal_details.amount), 0) as balance 
+                    "SELECT COALESCE(sum(CAST(journal_details.amount as DECIMAL(12,4))), 0) as balance 
                     FROM ledger_balances 
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
@@ -211,7 +211,7 @@ class JournalEntryController extends Controller
                 // here we can calculate all
             } else {
                 $balance = DB::scalar(
-                    "SELECT COALESCE(sum(journal_details.amount), 0) as balance 
+                    "SELECT COALESCE(sum(CAST(journal_details.amount as DECIMAL(12,4))), 0) as balance 
                     FROM ledger_balances 
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
