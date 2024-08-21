@@ -108,29 +108,29 @@ class JournalEntryController extends Controller
         } else {
             $start_of_day = $datetime;
         }
-
-
-        $today_point = LedgerBalanceHistory::where([
-            ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
-            ["domainUuid", "=", $ledger_balance->domainUuid],
-            ["currency", "=", $ledger_balance->currency],
-            ["start_date", "=", $start_of_day]
-        ])->first();
-        if ($today_point == null || $update == true) {
-            $last_point = LedgerBalanceHistory::where([
+        try {
+            DB::beginTransaction();
+            $today_point = LedgerBalanceHistory::where([
                 ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
                 ["domainUuid", "=", $ledger_balance->domainUuid],
                 ["currency", "=", $ledger_balance->currency],
-                ["start_date", "<", $start_of_day]
-            ])->orderBy("start_date", "DESC")->first();
-            $last_in_transaction_id = null;
-            $last_out_transaction_id = null;
-            $last_transaction_id = null;
-            if ($last_point == null) {
-                // $balance = 0;
+                ["start_date", "=", $start_of_day]
+            ])->first();
+            if ($today_point == null || $update == true) {
+                $last_point = LedgerBalanceHistory::where([
+                    ["ledgerUuid", "=", $ledger_balance->ledgerUuid],
+                    ["domainUuid", "=", $ledger_balance->domainUuid],
+                    ["currency", "=", $ledger_balance->currency],
+                    ["start_date", "<", $start_of_day]
+                ])->orderBy("start_date", "DESC")->first();
+                $last_in_transaction_id = null;
+                $last_out_transaction_id = null;
+                $last_transaction_id = null;
+                if ($last_point == null) {
+                    // $balance = 0;
 
-                $balance = DB::scalar(
-                    "SELECT COALESCE(sum(CAST(journal_details.amount as DECIMAL(12,4))), 0) as balance 
+                    $balance = DB::scalar(
+                        "SELECT COALESCE(sum(CAST(journal_details.amount as DECIMAL(12,4))), 0) as balance 
                     FROM ledger_balances 
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
@@ -139,15 +139,15 @@ class JournalEntryController extends Controller
                         ledger_balances.domainUuid = :domainUuid AND 
                         ledger_balances.currency = :currency AND 
                         journal_entries.transDate < :date_to",
-                    [
-                        "ledgerUuid" => $ledger_balance->ledgerUuid,
-                        "domainUuid" => $ledger_balance->domainUuid,
-                        "currency" => $ledger_balance->currency,
-                        "date_to" => $start_of_day
-                    ]
-                );
-                $last_transaction_id = DB::scalar(
-                    "SELECT journal_details.journalDetailId
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                    $last_transaction_id = DB::scalar(
+                        "SELECT journal_details.journalDetailId
                     FROM ledger_balances
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
@@ -159,15 +159,15 @@ class JournalEntryController extends Controller
                         journal_entries.transDate < :date_to
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
-                    [
-                        "ledgerUuid" => $ledger_balance->ledgerUuid,
-                        "domainUuid" => $ledger_balance->domainUuid,
-                        "currency" => $ledger_balance->currency,
-                        "date_to" => $start_of_day
-                    ]
-                );
-                $last_in_transaction_id = DB::scalar(
-                    "SELECT journal_details.journalDetailId
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                    $last_in_transaction_id = DB::scalar(
+                        "SELECT journal_details.journalDetailId
                     FROM ledger_balances
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
@@ -180,15 +180,15 @@ class JournalEntryController extends Controller
                         journal_details.amount >= 0
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
-                    [
-                        "ledgerUuid" => $ledger_balance->ledgerUuid,
-                        "domainUuid" => $ledger_balance->domainUuid,
-                        "currency" => $ledger_balance->currency,
-                        "date_to" => $start_of_day
-                    ]
-                );
-                $last_out_transaction_id = DB::scalar(
-                    "SELECT journal_details.journalDetailId
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                    $last_out_transaction_id = DB::scalar(
+                        "SELECT journal_details.journalDetailId
                     FROM ledger_balances
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
@@ -201,17 +201,17 @@ class JournalEntryController extends Controller
                         journal_details.amount < 0
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
-                    [
-                        "ledgerUuid" => $ledger_balance->ledgerUuid,
-                        "domainUuid" => $ledger_balance->domainUuid,
-                        "currency" => $ledger_balance->currency,
-                        "date_to" => $start_of_day
-                    ]
-                );
-                // here we can calculate all
-            } else {
-                $balance = DB::scalar(
-                    "SELECT COALESCE(sum(CAST(journal_details.amount as DECIMAL(12,4))), 0) as balance 
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                    // here we can calculate all
+                } else {
+                    $balance = DB::scalar(
+                        "SELECT COALESCE(sum(CAST(journal_details.amount as DECIMAL(12,4))), 0) as balance 
                     FROM ledger_balances 
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid 
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND journal_entries.currency = ledger_balances.currency 
@@ -221,17 +221,17 @@ class JournalEntryController extends Controller
                         ledger_balances.currency = :currency AND 
                         journal_entries.transDate >= :date_from AND 
                         journal_entries.transDate < :date_to",
-                    [
-                        "ledgerUuid" => $ledger_balance->ledgerUuid,
-                        "domainUuid" => $ledger_balance->domainUuid,
-                        "currency" => $ledger_balance->currency,
-                        "date_from" => $last_point->start_date,
-                        "date_to" => $start_of_day
-                    ]
-                );
-                $balance = bcadd($last_point->balance, $balance, 4);
-                $last_transaction_id = DB::scalar(
-                    "SELECT journal_details.journalDetailId
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_from" => $last_point->start_date,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                    $balance = bcadd($last_point->balance, $balance, 4);
+                    $last_transaction_id = DB::scalar(
+                        "SELECT journal_details.journalDetailId
                     FROM ledger_balances
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
@@ -244,16 +244,16 @@ class JournalEntryController extends Controller
                         journal_entries.transDate < :date_to
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
-                    [
-                        "ledgerUuid" => $ledger_balance->ledgerUuid,
-                        "domainUuid" => $ledger_balance->domainUuid,
-                        "currency" => $ledger_balance->currency,
-                        "date_from" => $last_point->start_date,
-                        "date_to" => $start_of_day
-                    ]
-                );
-                $last_in_transaction_id = DB::scalar(
-                    "SELECT journal_details.journalDetailId
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_from" => $last_point->start_date,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                    $last_in_transaction_id = DB::scalar(
+                        "SELECT journal_details.journalDetailId
                     FROM ledger_balances
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
@@ -267,16 +267,16 @@ class JournalEntryController extends Controller
                         journal_details.amount >= 0
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
-                    [
-                        "ledgerUuid" => $ledger_balance->ledgerUuid,
-                        "domainUuid" => $ledger_balance->domainUuid,
-                        "currency" => $ledger_balance->currency,
-                        "date_from" => $last_point->start_date,
-                        "date_to" => $start_of_day
-                    ]
-                );
-                $last_out_transaction_id = DB::scalar(
-                    "SELECT journal_details.journalDetailId
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_from" => $last_point->start_date,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                    $last_out_transaction_id = DB::scalar(
+                        "SELECT journal_details.journalDetailId
                     FROM ledger_balances
                     JOIN journal_details ON journal_details.ledgerUuid = ledger_balances.ledgerUuid
                     JOIN journal_entries On journal_details.journalEntryId = journal_entries.journalEntryId AND
@@ -290,41 +290,48 @@ class JournalEntryController extends Controller
                         journal_details.amount < 0
                     ORDER BY journal_entries.transDate DESC
                     LIMIT 1",
-                    [
+                        [
+                            "ledgerUuid" => $ledger_balance->ledgerUuid,
+                            "domainUuid" => $ledger_balance->domainUuid,
+                            "currency" => $ledger_balance->currency,
+                            "date_from" => $last_point->start_date,
+                            "date_to" => $start_of_day
+                        ]
+                    );
+                }
+
+
+                if ($today_point == null) {
+                    LedgerBalanceHistory::create([
                         "ledgerUuid" => $ledger_balance->ledgerUuid,
                         "domainUuid" => $ledger_balance->domainUuid,
                         "currency" => $ledger_balance->currency,
-                        "date_from" => $last_point->start_date,
-                        "date_to" => $start_of_day
-                    ]
-                );
+                        'balance' => $balance,
+                        'start_date' => $start_of_day,
+                        'balance_updated' => \Carbon\Carbon::now()->format("Y-m-d H:i:s.u"),
+                        'last_in_transaction_id' => $last_in_transaction_id,
+                        'last_out_transaction_id' => $last_out_transaction_id,
+                        'last_transaction_id' => $last_transaction_id
+                    ]);
+                } else {
+                    $today_point->ledgerUuid = $ledger_balance->ledgerUuid;
+                    $today_point->domainUuid = $ledger_balance->domainUuid;
+                    $today_point->currency = $ledger_balance->currency;
+                    $today_point->balance = $balance;
+                    $today_point->start_date = $start_of_day;
+                    $today_point->balance_updated = \Carbon\Carbon::now()->format("Y-m-d H:i:s.u");
+                    $today_point->last_in_transaction_id = $last_in_transaction_id;
+                    $today_point->last_out_transaction_id = $last_out_transaction_id;
+                    $today_point->last_transaction_id = $last_transaction_id;
+                    $today_point->save();
+                }
             }
+            DB::commit();
+        } catch (Exception $exception) {
 
 
-            if ($today_point == null) {
-                LedgerBalanceHistory::create([
-                    "ledgerUuid" => $ledger_balance->ledgerUuid,
-                    "domainUuid" => $ledger_balance->domainUuid,
-                    "currency" => $ledger_balance->currency,
-                    'balance' => $balance,
-                    'start_date' => $start_of_day,
-                    'balance_updated' => \Carbon\Carbon::now()->format("Y-m-d H:i:s.u"),
-                    'last_in_transaction_id' => $last_in_transaction_id,
-                    'last_out_transaction_id' => $last_out_transaction_id,
-                    'last_transaction_id' => $last_transaction_id
-                ]);
-            } else {
-                $today_point->ledgerUuid = $ledger_balance->ledgerUuid;
-                $today_point->domainUuid = $ledger_balance->domainUuid;
-                $today_point->currency = $ledger_balance->currency;
-                $today_point->balance = $balance;
-                $today_point->start_date = $start_of_day;
-                $today_point->balance_updated = \Carbon\Carbon::now()->format("Y-m-d H:i:s.u");
-                $today_point->last_in_transaction_id = $last_in_transaction_id;
-                $today_point->last_out_transaction_id = $last_out_transaction_id;
-                $today_point->last_transaction_id = $last_transaction_id;
-                $today_point->save();
-            }
+            DB::rollBack();
+            throw $exception;
         }
     }
 
